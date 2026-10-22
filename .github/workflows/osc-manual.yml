@@ -1,0 +1,63 @@
+name: Manual CI
+
+# Fork-only dispatch wrapper (Nitjsefnie-OSC): validates an arbitrary ref with
+# the repository's own checks. Not part of upstream CI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_ref:
+        description: Git ref to validate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osc-manual-${{ inputs.target_ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: osc-validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.target_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Provenance
+        run: |
+          echo "osc-manual target_ref=${{ inputs.target_ref }}"
+          echo "osc-manual sha=$(git rev-parse HEAD)"
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Datagen, build and test on JDK 25
+        run: |
+          ./gradlew runDatagen
+          ./gradlew build test
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+          cache: 'gradle'
+
+      - name: Spotless check on JDK 21
+        run: ./gradlew spotlessCheck
