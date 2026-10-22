@@ -22,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.BlockView;
 
 public class WaypointHandler extends KeyedTardisComponent {
     public static final BoolProperty HAS_CARTRIDGE = new BoolProperty("has_cartridge", false);
@@ -160,13 +161,17 @@ public class WaypointHandler extends KeyedTardisComponent {
             return;
 
         ServerWorld world = tardis.asServer().world();
-        ConsoleTypeSchema type = world.getBlockEntity(console) instanceof ConsoleBlockEntity blockEntity
-                ? blockEntity.getTypeSchema() : null;
-        Vec3d position = getCartridgeSpawnPos(console, type);
+        Vec3d position = getCartridgeSpawnPos(world, console);
         ItemEntity entity = new ItemEntity(world, position.x, position.y,
                 position.z, isDisc() ? createDiscItem(waypoint) : createWaypointItem(waypoint));
 
         world.spawnEntity(entity);
+    }
+
+    static Vec3d getCartridgeSpawnPos(BlockView world, BlockPos console) {
+        ConsoleTypeSchema type = world.getBlockEntity(console) instanceof ConsoleBlockEntity blockEntity
+                ? blockEntity.getTypeSchema() : null;
+        return getCartridgeSpawnPos(console, type);
     }
 
     static Vec3d getCartridgeSpawnPos(BlockPos console, ConsoleTypeSchema type) {
