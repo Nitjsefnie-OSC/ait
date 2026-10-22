@@ -2,6 +2,22 @@ package dev.amble.ait.core.blocks;
 
 import java.util.function.ToIntFunction;
 
+import dev.amble.ait.AITMod;
+import dev.amble.ait.api.tardis.TardisComponent;
+import dev.amble.ait.compat.DependencyChecker;
+import dev.amble.ait.core.AITBlocks;
+import dev.amble.ait.core.AITItems;
+import dev.amble.ait.core.blockentities.ExteriorBlockEntity;
+import dev.amble.ait.core.tardis.Tardis;
+import dev.amble.ait.core.tardis.handler.BiomeHandler;
+import dev.amble.ait.core.tardis.handler.travel.TravelHandler;
+import dev.amble.ait.core.tardis.handler.travel.TravelHandlerBase;
+import dev.amble.ait.core.util.ShapeUtil;
+import dev.amble.ait.data.ShapeMap;
+import dev.amble.ait.module.planet.core.space.planet.Planet;
+import dev.amble.ait.module.planet.core.space.planet.PlanetRegistry;
+import dev.amble.ait.registry.impl.exterior.ExteriorVariantRegistry;
+import dev.amble.lib.api.ICantBreak;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,22 +55,6 @@ import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
-
-import dev.amble.ait.AITMod;
-import dev.amble.ait.api.tardis.TardisComponent;
-import dev.amble.ait.compat.DependencyChecker;
-import dev.amble.ait.core.AITBlocks;
-import dev.amble.ait.core.AITItems;
-import dev.amble.ait.core.blockentities.ExteriorBlockEntity;
-import dev.amble.ait.core.tardis.Tardis;
-import dev.amble.ait.core.tardis.handler.BiomeHandler;
-import dev.amble.ait.core.tardis.handler.travel.TravelHandler;
-import dev.amble.ait.core.tardis.handler.travel.TravelHandlerBase;
-import dev.amble.ait.core.util.ShapeUtil;
-import dev.amble.ait.module.planet.core.space.planet.Planet;
-import dev.amble.ait.module.planet.core.space.planet.PlanetRegistry;
-import dev.amble.ait.registry.impl.exterior.ExteriorVariantRegistry;
-import dev.amble.lib.api.ICantBreak;
 
 @SuppressWarnings("deprecation")
 public class ExteriorBlock extends Block implements BlockEntityProvider, ICantBreak, Waterloggable {
@@ -110,6 +110,11 @@ public class ExteriorBlock extends Block implements BlockEntityProvider, ICantBr
 
         DIAGONAL_SHAPE = shape;
     }
+
+    private static final ShapeMap CUBE_SHAPES = ShapeUtil.rotations(Direction.NORTH, CUBE_NORTH_SHAPE).build();
+    private static final ShapeMap PORTALS_SHAPES = ShapeUtil.rotations(Direction.NORTH, PORTALS_SHAPE).build();
+    private static final ShapeMap DIAGONAL_SHAPES = ShapeUtil.rotations(Direction.NORTH, DIAGONAL_SHAPE).build();
+    private static final ShapeMap PORTALS_DIAGONAL_SHAPES = ShapeUtil.rotations(Direction.NORTH, PORTALS_SHAPE_DIAGONAL).build();
 
     public ExteriorBlock(Settings settings) {
         super(settings.nonOpaque());
@@ -173,7 +178,7 @@ public class ExteriorBlock extends Block implements BlockEntityProvider, ICantBr
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        VoxelShape normal = this.getNormalShape(state, false);
+        VoxelShape normal = this.getNormalShape(state, true);
 
         if (!(blockEntity instanceof ExteriorBlockEntity exterior))
             return normal;
@@ -246,21 +251,20 @@ public class ExteriorBlock extends Block implements BlockEntityProvider, ICantBr
         return VoxelShapes.empty();
     }
 
-    // TODO cache this.
     public VoxelShape getNormalShape(BlockState state, boolean ignorePortals) {
         Direction direction = RotationPropertyHelper.toDirection(state.get(ROTATION))
                 .orElse(null);
 
-        VoxelShape shape;
+        ShapeMap shapes;
 
         if (direction == null) {
-            shape = DependencyChecker.hasPortals() && AITMod.CONFIG.allowPortalsBoti && !ignorePortals ? PORTALS_SHAPE_DIAGONAL : DIAGONAL_SHAPE;
+            shapes = DependencyChecker.hasPortals() && AITMod.CONFIG.allowPortalsBoti && !ignorePortals ? PORTALS_DIAGONAL_SHAPES : DIAGONAL_SHAPES;
             direction = approximateDirection(state.get(ROTATION));
         } else {
-            shape = DependencyChecker.hasPortals() && AITMod.CONFIG.allowPortalsBoti && !ignorePortals ? PORTALS_SHAPE : CUBE_NORTH_SHAPE;
+            shapes = DependencyChecker.hasPortals() && AITMod.CONFIG.allowPortalsBoti && !ignorePortals ? PORTALS_SHAPES : CUBE_SHAPES;
         }
 
-        return ShapeUtil.rotate(Direction.NORTH, direction, shape);
+        return shapes.get(direction);
     }
 
     public Direction approximateDirection(int rotation) {

@@ -1,11 +1,5 @@
 package dev.amble.ait.core.tardis.handler.travel;
 
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.Random;
-
 import dev.amble.ait.AITMod;
 import dev.amble.ait.api.tardis.TardisEvents;
 import dev.amble.ait.core.AITSounds;
@@ -16,6 +10,12 @@ import dev.amble.ait.data.properties.bool.BoolValue;
 import dev.amble.ait.data.properties.integer.IntProperty;
 import dev.amble.ait.data.properties.integer.IntValue;
 import dev.amble.lib.data.CachedDirectedGlobalPos;
+
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.random.Random;
 
 public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
 
@@ -33,8 +33,8 @@ public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
     protected final BoolValue handbrake = HANDBRAKE.create(this);
     protected final BoolValue autopilot = AUTOPILOT.create(this);
 
-    private int realFlightTicks = 0;
-    private int randomFlightSoundTick = -1;
+    private int missedEvents;
+    private int missedHardCap;
 
     public ProgressiveTravelHandler(Id id) {
         super(id);
@@ -97,21 +97,26 @@ public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
     public void recalculate() {
         this.setTargetTicks(TravelUtil.getFlightDuration(this.position(), this.destination()));
         this.setFlightTicks(this.isInFlight() ? MathHelper.clamp(this.getFlightTicks(), 0, this.getTargetTicks()) : 0);
+        int prevCap = this.missedHardCap;
+        this.missedHardCap = TravelUtil.getHardCap(this.getTargetTicks());
+
+        // Rescale the missed events into the new cap. prevCap is zero on a TARDIS that has never
+        // flown, which crashed the server thread the first time anything set a destination. The
+        // ratio is taken in floating point as well, since an int division truncated every value
+        // below the old cap to nothing.
+        this.missedEvents = prevCap == 0
+                ? 0
+                : MathHelper.floor((float) this.missedEvents / prevCap * this.missedHardCap);
     }
 
     protected void startFlight() {
         this.setFlightTicks(0);
         this.setTargetTicks(TravelUtil.getFlightDuration(this.position(), this.destination()));
-
-        this.realFlightTicks = 0;
-        this.randomFlightSoundTick = 100 + random.nextBetween(-20, 30);
     }
 
     protected void resetFlight() {
         this.setFlightTicks(0);
         this.setTargetTicks(0);
-        this.realFlightTicks = 0;
-        this.randomFlightSoundTick = -1;
     }
 
     public int getFlightTicks() {
@@ -175,16 +180,6 @@ public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
     public void tick(MinecraftServer server) {
         super.tick(server);
 
-        if (this.getState() == State.FLIGHT) {
-            this.realFlightTicks++;
-            if (this.realFlightTicks == this.randomFlightSoundTick) {
-                this.tardis.getDesktop().playSoundAtEveryConsole(AITSounds.FLIGHT, SoundCategory.AMBIENT);
-            }
-        } else if (this.getState() != State.MAT && this.getState() != State.DEMAT) {
-            this.realFlightTicks = 0;
-            this.randomFlightSoundTick = -1;
-        }
-
         if ((this.getTargetTicks() > 0 || this.getFlightTicks() > 0)
                 && this.getState() == TravelHandlerBase.State.LANDED)
             this.recalculate();
@@ -211,7 +206,7 @@ public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
             return;
         }
 
-        if (server.getTicks() % (this.maxSpeed.get() - this.speed() + 1) == 0)
+        if (server.getTicks() % Math.max(1, this.maxSpeed.get() - this.speed() + 1) == 0)
             this.setFlightTicks(this.getFlightTicks() + AITMod.CONFIG.travelPerTick
                     + this.instability() - 1);
     }
@@ -235,5 +230,17 @@ public abstract class ProgressiveTravelHandler extends TravelHandlerBase {
         if (random.nextBetween(0, (15 * maxSpeed) / this.speed()) == maxSpeed) {
             sequences.triggerRandomSequence(true);
         }
+    }
+
+    public void missEvent() {
+        this.missedEvents += 1;
+        if (this.missedEvents >= this.missedHardCap) {
+            this.tardis().crash();
+            this.resetMissed();
+        }
+    }
+
+    public void resetMissed() {
+        this.missedEvents = 0;
     }
 }

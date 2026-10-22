@@ -1,5 +1,16 @@
 package dev.amble.ait.client.renderers.entities;
 
+import dev.amble.ait.api.tardis.TardisComponent;
+import dev.amble.ait.client.models.exteriors.ExteriorModel;
+import dev.amble.ait.client.models.machines.ShieldsModel;
+import dev.amble.ait.client.renderers.AITRenderLayers;
+import dev.amble.ait.client.renderers.VortexRender;
+import dev.amble.ait.core.AITDimensions;
+import dev.amble.ait.core.entities.FlightTardisEntity;
+import dev.amble.ait.core.tardis.Tardis;
+import dev.amble.ait.core.tardis.handler.BiomeHandler;
+import dev.amble.ait.data.schema.exterior.ClientExteriorVariantSchema;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
@@ -13,17 +24,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
-
-import dev.amble.ait.api.tardis.TardisComponent;
-import dev.amble.ait.client.models.exteriors.ExteriorModel;
-import dev.amble.ait.client.models.machines.ShieldsModel;
-import dev.amble.ait.client.renderers.AITRenderLayers;
-import dev.amble.ait.client.renderers.VortexRender;
-import dev.amble.ait.core.AITDimensions;
-import dev.amble.ait.core.entities.FlightTardisEntity;
-import dev.amble.ait.core.tardis.Tardis;
-import dev.amble.ait.core.tardis.handler.BiomeHandler;
-import dev.amble.ait.data.schema.exterior.ClientExteriorVariantSchema;
 
 public class FlightTardisRenderer extends EntityRenderer<FlightTardisEntity> {
 
@@ -99,7 +99,7 @@ public class FlightTardisRenderer extends EntityRenderer<FlightTardisEntity> {
 
             float color = alarms ? 0.3f : 1f;
 
-            model.renderEntity(entity, this.model.getPart(), matrices, vertexConsumers.getBuffer(AITRenderLayers.tardisEmissiveCullZOffset(variant.emission(), true)), 0xf000f0, OverlayTexture.DEFAULT_UV, color, color, color, 1);
+            model.renderEntity(entity, this.model.getPart(), matrices, vertexConsumers.getBuffer(AITRenderLayers.tardisEmissiveCullZOffset(variant.emission())), 0xf000f0, OverlayTexture.DEFAULT_UV, color, color, color, 1);
         }
 
         BiomeHandler biome = tardis.handler(TardisComponent.Id.BIOME);

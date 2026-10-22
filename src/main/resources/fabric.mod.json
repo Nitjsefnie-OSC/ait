@@ -16,6 +16,8 @@
 		" - nanowu",
 		"\nArtists:",
 		" - WazzakiWanzz",
+		" - Ember",
+		" - Ember808",
 		" - Tright",
 		" - b2bmrww2",
 		" - panda_red (classic_account)",
@@ -42,14 +44,15 @@
 		" - Pastelb96 (translations)",
 		" - Codiak",
 		" - Small Moss (translations)",
-		" - bastalation"
+		" - bastalation",
+		" - Hailrake"
 	],
 	"contact": {
 		"homepage": "https://amblelabs.github.io",
 		"sources": "https://github.com/amblelabs/ait/",
 		"issues": "https://github.com/amblelabs/ait/issues"
 	},
-	"license": "Apache-2.0",
+	"license": "LGPL-3.0",
 	"icon": "assets/ait/icon.png",
 	"environment": "*",
 	"entrypoints": {

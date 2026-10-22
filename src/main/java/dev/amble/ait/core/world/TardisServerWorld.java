@@ -2,9 +2,13 @@ package dev.amble.ait.core.world;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
 
+import dev.amble.ait.AITMod;
+import dev.amble.ait.core.AITDimensions;
+import dev.amble.ait.core.tardis.ServerTardis;
+import dev.amble.lib.util.ServerLifecycleHooks;
 import dev.drtheo.multidim.MultiDim;
 import dev.drtheo.multidim.MultiDimMod;
 import dev.drtheo.multidim.api.MultiDimServerWorld;
@@ -29,11 +33,6 @@ import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraft.world.spawner.Spawner;
-
-import dev.amble.ait.AITMod;
-import dev.amble.ait.core.AITDimensions;
-import dev.amble.ait.core.tardis.ServerTardis;
-import dev.amble.lib.util.ServerLifecycleHooks;
 
 public class TardisServerWorld extends MultiDimServerWorld {
 
@@ -85,6 +84,30 @@ public class TardisServerWorld extends MultiDimServerWorld {
     }
 
     public static TardisServerWorld create(ServerTardis tardis) {
+        MinecraftServer server = ServerLifecycleHooks.get();
+        if (Thread.currentThread() != server.getThread()) {
+            AITMod.LOGGER.error("Tried creating a TARDIS world when not on the server thread", new Throwable());
+            CompletableFuture<TardisServerWorld> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    future.complete(create(tardis));
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
+            });
+
+            try {
+                return future.get(5, TimeUnit.SECONDS);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } catch (TimeoutException e) {
+                throw new RuntimeException("Timed out waiting for server thread to create TARDIS world", e);
+            }
+        }
+
         AITMod.LOGGER.info("Creating a dimension for TARDIS {}", tardis.getUuid());
         TardisServerWorld created = (TardisServerWorld) MultiDim.get(ServerLifecycleHooks.get())
                 .add(AITDimensions.TARDIS_WORLD_BLUEPRINT, idForTardis(tardis));
@@ -108,6 +131,29 @@ public class TardisServerWorld extends MultiDimServerWorld {
     }
 
     public static TardisServerWorld load(MinecraftServer server, ServerTardis tardis) {
+        if (Thread.currentThread() != server.getThread()) {
+            AITMod.LOGGER.error("Tried loading a TARDIS world when not on the server thread", new Throwable());
+            CompletableFuture<TardisServerWorld> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    future.complete(load(server, tardis));
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
+            });
+
+            try {
+                return future.get(5, TimeUnit.SECONDS);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } catch (TimeoutException e) {
+                throw new RuntimeException("Timed out waiting for server thread to load TARDIS world", e);
+            }
+        }
+
         MultiDim multidim = MultiDim.get(server);
 
         RegistryKey<World> key = keyForTardis(tardis);

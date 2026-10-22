@@ -1,11 +1,14 @@
 package dev.amble.ait.core.item;
 
+import static dev.amble.ait.client.util.TooltipUtil.addMultilineTooltip;
+
 import java.util.List;
 
+import dev.amble.ait.core.engine.DurableSubSystem;
 import dev.amble.ait.core.engine.block.SubSystemBlockEntity;
 import dev.amble.ait.core.entities.ConsoleControlEntity;
-import net.minecraft.util.hit.EntityHitResult;
 import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.LivingEntity;
@@ -18,13 +21,11 @@ import net.minecraft.stat.Stats;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.*;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-
-import dev.amble.ait.core.engine.DurableSubSystem;
-import dev.amble.ait.core.engine.block.generic.GenericStructureSystemBlockEntity;
 
 public class RepairToolItem extends Item {
     public RepairToolItem(Settings settings) {
@@ -35,7 +36,8 @@ public class RepairToolItem extends Item {
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         super.appendTooltip(stack, world, tooltip, context);
 
-        tooltip.add(Text.translatable("tooltip.ait.repair_tool").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+        addMultilineTooltip(tooltip, Text.translatable("tooltip.ait.repair_tool")
+                .formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
     }
 
     @Override
@@ -66,18 +68,16 @@ public class RepairToolItem extends Item {
         }
 
         HitResult hitResult = playerEntity.raycast(16, 0.0f, false);
-        if (hitResult.getType() == HitResult.Type.BLOCK) {
-            Vec3d pos3d = hitResult.getPos();
-            BlockPos pos = new BlockPos((int) pos3d.x, (int) pos3d.y, (int) pos3d.z);
+        if (hitResult instanceof BlockHitResult blockHitResult) {
+            BlockPos pos = blockHitResult.getBlockPos();
             BlockEntity blockEntity = world.getBlockEntity(pos);
 
             if (blockEntity instanceof SubSystemBlockEntity subSystem) {
                 if (subSystem.system() instanceof DurableSubSystem durable) {
-                    playerEntity.sendMessage(Text.literal(durable.durability() + "/" + DurableSubSystem.MAX_DURABILITY).setStyle(Style.EMPTY.withColor(Formatting.GOLD).withBold(true)), true);
+                    playerEntity.sendMessage(Text.literal(Math.round(durable.durability()) + "/" + DurableSubSystem.MAX_DURABILITY).setStyle(Style.EMPTY.withColor(Formatting.GOLD).withBold(true)), true);
                     world.playSound(null, pos, SoundEvents.BLOCK_ANCIENT_DEBRIS_HIT, SoundCategory.BLOCKS, 0.5f, 0.8f);
                     if (durable.durability() < DurableSubSystem.MAX_DURABILITY) {
-                        int val = world.getRandom().nextBetween(2, 10);
-                        val = (val * DurableSubSystem.MAX_DURABILITY) / 100;
+                        float val = world.getRandom().nextBetween(2, 10) * DurableSubSystem.MAX_DURABILITY / 100f;
                         durable.addDurability(val);
                         stack.damage(1, playerEntity, p -> p.sendToolBreakStatus(playerEntity.getActiveHand()));
 
@@ -90,11 +90,7 @@ public class RepairToolItem extends Item {
                     }
                 }
             }
-        }
-
-        if (hitResult.getType() == HitResult.Type.ENTITY) {
-            EntityHitResult result = (EntityHitResult) hitResult;
-
+        } else if (hitResult instanceof EntityHitResult result) {
             if (result.getEntity() instanceof ConsoleControlEntity consoleControl) {
                 playerEntity.sendMessage(Text.literal(consoleControl.getDurability() + "/" + ConsoleControlEntity.MAX_DURABILITY).setStyle(Style.EMPTY.withColor(Formatting.GOLD).withBold(true)), true);
                 world.playSound(null, consoleControl.getBlockPos(), SoundEvents.BLOCK_ANCIENT_DEBRIS_HIT, SoundCategory.BLOCKS, 0.5f, 0.8f);

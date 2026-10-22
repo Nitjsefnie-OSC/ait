@@ -1,10 +1,5 @@
 package dev.amble.ait.data.schema.console.type;
 
-import org.joml.Vector3f;
-
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.util.Identifier;
-
 import dev.amble.ait.AITMod;
 import dev.amble.ait.core.tardis.control.ControlTypes;
 import dev.amble.ait.core.tardis.control.impl.*;
@@ -15,6 +10,10 @@ import dev.amble.ait.core.tardis.control.impl.pos.ZControl;
 import dev.amble.ait.core.tardis.control.impl.waypoint.LoadWaypointControl;
 import dev.amble.ait.core.tardis.control.impl.waypoint.SaveWaypointControl;
 import dev.amble.ait.data.schema.console.ConsoleTypeSchema;
+import org.joml.Vector3f;
+
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.util.Identifier;
 
 public class CopperType extends ConsoleTypeSchema {
     public static final Identifier REFERENCE = AITMod.id("console/copper");
@@ -90,7 +89,7 @@ public class CopperType extends ConsoleTypeSchema {
             new ControlTypes(new HandBrakeControl(), EntityDimensions.changing(0.3624999f, 0.23750003f),
                     new Vector3f(-0.7218750054016709f, -0.5000000167638063f, 0.44843447022140026f)),
             new ControlTypes(new HandBrakeControl(), EntityDimensions.changing(0.3624999f, 0.23750003f),
-                    new Vector3f(0.7656250167638063f, -0.48750001657754183f, -0.4515655431896448f)),
+                    new Vector3f(-0.7218742370605469f, -0.5f, -0.41406518314033747f)),
     };
 
     public CopperType() {

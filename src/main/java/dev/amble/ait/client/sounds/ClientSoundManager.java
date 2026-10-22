@@ -1,16 +1,12 @@
 package dev.amble.ait.client.sounds;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-
-import net.minecraft.client.MinecraftClient;
-
 import dev.amble.ait.client.sounds.alarm.ClientAlarmHandler;
 import dev.amble.ait.client.sounds.console.ClientConsoleAmbientSoundsHandler;
 import dev.amble.ait.client.sounds.drifting.ClientTwoThousandSoundHandler;
 import dev.amble.ait.client.sounds.engine.ClientEngineLoopSoundHandler;
 import dev.amble.ait.client.sounds.fall.ClientFallSoundHandler;
 import dev.amble.ait.client.sounds.flight.ClientFlightHandler;
+import dev.amble.ait.client.sounds.flight.ClientFlightMusicHandler;
 import dev.amble.ait.client.sounds.hum.exterior.ExteriorHumHandler;
 import dev.amble.ait.client.sounds.hum.interior.ClientCreakHandler;
 import dev.amble.ait.client.sounds.hum.interior.ClientHumHandler;
@@ -19,6 +15,10 @@ import dev.amble.ait.client.sounds.rain.ClientRainSoundHandler;
 import dev.amble.ait.client.sounds.rain.ClientThunderSoundHandler;
 import dev.amble.ait.client.sounds.sonic.SonicSoundHandler;
 import dev.amble.ait.client.sounds.vortex.ClientVortexSoundsHandler;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+
+import net.minecraft.client.MinecraftClient;
 
 /**
  * A class for playing + managing our custom sounds on the client, right now
@@ -40,6 +40,7 @@ public class ClientSoundManager {
     private static ClientConsoleAmbientSoundsHandler ambientSound;
     private static ClientEngineLoopSoundHandler engineLoopSound;
     private static ExteriorHumHandler exteriorHum;
+    private static ClientFlightMusicHandler flightMusic;
 
     public static ClientHumHandler getHum() {
         if (hum == null)
@@ -140,6 +141,13 @@ public class ClientSoundManager {
         return exteriorHum;
     }
 
+    public static ClientFlightMusicHandler getFlightMusic() {
+        if (flightMusic == null)
+            flightMusic = ClientFlightMusicHandler.create();
+
+        return flightMusic;
+    }
+
     public static void tick(MinecraftClient client) {
         if (getAlarm() != null)
             getAlarm().tick(client);
@@ -176,6 +184,9 @@ public class ClientSoundManager {
 
         if (getDriftingSound() != null)
             getDriftingSound().tick(client);
+
+        if (getFlightMusic() != null)
+            getFlightMusic().tick(client);
 
         getExteriorHum().tick(client);
     }

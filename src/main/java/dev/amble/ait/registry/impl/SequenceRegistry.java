@@ -3,6 +3,18 @@ package dev.amble.ait.registry.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.amble.ait.AITMod;
+import dev.amble.ait.core.tardis.ServerTardis;
+import dev.amble.ait.core.tardis.control.impl.*;
+import dev.amble.ait.core.tardis.control.impl.pos.IncrementControl;
+import dev.amble.ait.core.tardis.control.impl.pos.XControl;
+import dev.amble.ait.core.tardis.control.impl.pos.YControl;
+import dev.amble.ait.core.tardis.control.impl.pos.ZControl;
+import dev.amble.ait.core.tardis.control.impl.waypoint.LoadWaypointControl;
+import dev.amble.ait.core.tardis.control.sequences.Sequence;
+import dev.amble.ait.core.util.WorldUtil;
+import dev.amble.lib.data.DirectedBlockPos;
+import dev.amble.plushies.PlushieBlocks;
 import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
 
 import net.minecraft.entity.EntityType;
@@ -23,18 +35,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
-
-import dev.amble.ait.AITMod;
-import dev.amble.ait.core.tardis.ServerTardis;
-import dev.amble.ait.core.tardis.control.impl.*;
-import dev.amble.ait.core.tardis.control.impl.pos.IncrementControl;
-import dev.amble.ait.core.tardis.control.impl.pos.XControl;
-import dev.amble.ait.core.tardis.control.impl.pos.YControl;
-import dev.amble.ait.core.tardis.control.impl.pos.ZControl;
-import dev.amble.ait.core.tardis.control.impl.waypoint.LoadWaypointControl;
-import dev.amble.ait.core.tardis.control.sequences.Sequence;
-import dev.amble.ait.core.util.WorldUtil;
-import dev.amble.lib.data.DirectedBlockPos;
 
 public class SequenceRegistry {
     public static final SimpleRegistry<Sequence> REGISTRY = FabricRegistryBuilder
@@ -200,8 +200,11 @@ public class SequenceRegistry {
                     ItemEntity rewardForCloaking = new ItemEntity(EntityType.ITEM, world);
                     rewardForCloaking.setPosition(doorPos.toCenterPos());
 
-                    rewardForCloaking.setStack(
-                            random.nextBoolean() ? Items.COOKIE.getDefaultStack() : Items.POPPY.getDefaultStack());
+                    rewardForCloaking.setStack(switch (random.nextInt(3)) {
+                        case 0 -> Items.COOKIE.getDefaultStack();
+                        case 1 -> Items.POPPY.getDefaultStack();
+                        default -> PlushieBlocks.GIFT_BOX.asItem().getDefaultStack();
+                    });
                     world.spawnEntity(rewardForCloaking);
                 }), (missedTardis -> {
                     DirectedBlockPos directedDoorPos = missedTardis.getDesktop().getDoorPos();

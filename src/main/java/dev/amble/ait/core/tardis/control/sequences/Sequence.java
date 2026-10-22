@@ -3,15 +3,14 @@ package dev.amble.ait.core.tardis.control.sequences;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.amble.ait.AITMod;
+import dev.amble.ait.core.tardis.Tardis;
+import dev.amble.ait.core.tardis.control.Control;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
-import dev.amble.ait.AITMod;
-import dev.amble.ait.core.tardis.Tardis;
-import dev.amble.ait.core.tardis.control.Control;
 
 // should this be an interface? - No :)
 public class Sequence {
@@ -120,6 +119,7 @@ public class Sequence {
 
         @Override
         public void executeMissed(Tardis tardis, @Nullable ServerPlayerEntity player) {
+            tardis.travel().missEvent();
             this.executeMissed.run(tardis);
         }
 
