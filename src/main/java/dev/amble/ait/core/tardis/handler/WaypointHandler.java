@@ -4,17 +4,22 @@ import java.util.Optional;
 
 import dev.amble.ait.api.tardis.KeyedTardisComponent;
 import dev.amble.ait.api.tardis.TardisEvents;
+import dev.amble.ait.core.blockentities.ConsoleBlockEntity;
 import dev.amble.ait.core.item.ControlDiscItem;
 import dev.amble.ait.core.item.WaypointItem;
+import dev.amble.ait.core.tardis.control.ControlTypes;
+import dev.amble.ait.core.tardis.control.impl.ConsolePortControl;
 import dev.amble.ait.core.world.TardisServerWorld;
 import dev.amble.ait.data.Waypoint;
 import dev.amble.ait.data.properties.bool.BoolProperty;
 import dev.amble.ait.data.properties.bool.BoolValue;
 import dev.amble.ait.data.schema.console.ConsoleTypeSchema;
 import dev.amble.lib.data.CachedDirectedGlobalPos;
+import org.joml.Vector3f;
 
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -154,14 +159,27 @@ public class WaypointHandler extends KeyedTardisComponent {
         if (!this.hasCartridge())
             return;
 
-        Vec3d position = getCartridgeSpawnPos(console, null);
-        ItemEntity entity = new ItemEntity(tardis.asServer().world(), position.x, position.y,
+        ServerWorld world = tardis.asServer().world();
+        ConsoleTypeSchema type = world.getBlockEntity(console) instanceof ConsoleBlockEntity blockEntity
+                ? blockEntity.getTypeSchema() : null;
+        Vec3d position = getCartridgeSpawnPos(console, type);
+        ItemEntity entity = new ItemEntity(world, position.x, position.y,
                 position.z, isDisc() ? createDiscItem(waypoint) : createWaypointItem(waypoint));
 
-        tardis.asServer().world().spawnEntity(entity);
+        world.spawnEntity(entity);
     }
 
     static Vec3d getCartridgeSpawnPos(BlockPos console, ConsoleTypeSchema type) {
+        if (type != null) {
+            for (ControlTypes control : type.getControlTypes()) {
+                if (control.getControl() instanceof ConsolePortControl) {
+                    // Match the control entity's float-based placement.
+                    Vector3f position = console.toCenterPos().toVector3f().add(control.getOffset());
+                    return new Vec3d(position.x(), position.y(), position.z());
+                }
+            }
+        }
+
         return Vec3d.of(console);
     }
 
