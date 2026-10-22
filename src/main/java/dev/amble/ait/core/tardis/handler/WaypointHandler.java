@@ -10,11 +10,13 @@ import dev.amble.ait.core.world.TardisServerWorld;
 import dev.amble.ait.data.Waypoint;
 import dev.amble.ait.data.properties.bool.BoolProperty;
 import dev.amble.ait.data.properties.bool.BoolValue;
+import dev.amble.ait.data.schema.console.ConsoleTypeSchema;
 import dev.amble.lib.data.CachedDirectedGlobalPos;
 
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 public class WaypointHandler extends KeyedTardisComponent {
     public static final BoolProperty HAS_CARTRIDGE = new BoolProperty("has_cartridge", false);
@@ -152,10 +154,15 @@ public class WaypointHandler extends KeyedTardisComponent {
         if (!this.hasCartridge())
             return;
 
-        ItemEntity entity = new ItemEntity(tardis.asServer().world(), console.getX(), console.getY(),
-                console.getZ(), isDisc() ? createDiscItem(waypoint) : createWaypointItem(waypoint));
+        Vec3d position = getCartridgeSpawnPos(console, null);
+        ItemEntity entity = new ItemEntity(tardis.asServer().world(), position.x, position.y,
+                position.z, isDisc() ? createDiscItem(waypoint) : createWaypointItem(waypoint));
 
         tardis.asServer().world().spawnEntity(entity);
+    }
+
+    static Vec3d getCartridgeSpawnPos(BlockPos console, ConsoleTypeSchema type) {
+        return Vec3d.of(console);
     }
 
     public static ItemStack createWaypointItem(Waypoint waypoint) {

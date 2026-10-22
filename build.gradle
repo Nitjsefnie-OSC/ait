@@ -97,6 +97,7 @@ sourceSets {
     }
 }
 dependencies {
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -170,6 +171,10 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 17
+}
+
+test {
+    useJUnitPlatform()
 }
 
 java {
