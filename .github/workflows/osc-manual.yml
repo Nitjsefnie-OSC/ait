@@ -52,12 +52,5 @@ jobs:
           ./gradlew runDatagen
           ./gradlew build test
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v6
-        with:
-          java-version: '21'
-          distribution: 'microsoft'
-          cache: 'gradle'
-
-      - name: Spotless check on JDK 21
+      - name: Spotless check on JDK 25
         run: ./gradlew spotlessCheck
