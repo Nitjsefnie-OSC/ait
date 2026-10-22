@@ -96,7 +96,15 @@ sourceSets {
         }
     }
 }
+configurations {
+    mockitoAgent
+}
+
 dependencies {
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.mockito:mockito-core:5.24.0"
+    mockitoAgent("org.mockito:mockito-core:5.24.0") { transitive = false }
+
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -142,6 +150,24 @@ dependencies {
 
     modCompileOnly("dev.lambdaurora.lambdynamiclights:lambdynamiclights-api:${project.lambdynlights_version}")
     modLocalRuntime("dev.lambdaurora.lambdynamiclights:lambdynamiclights-runtime:${project.lambdynlights_version}")
+}
+
+abstract class MockitoAgentProvider implements CommandLineArgumentProvider {
+    @Classpath
+    abstract ConfigurableFileCollection getAgentJar()
+
+    @Override
+    Iterable<String> asArguments() {
+        ["-javaagent:${agentJar.singleFile}"]
+    }
+}
+
+test {
+    workingDir = layout.buildDirectory.get().asFile
+    def agent = objects.newInstance(MockitoAgentProvider)
+    agent.agentJar.from(configurations.mockitoAgent)
+    jvmArgumentProviders.add(agent)
+    systemProperty "mockito.suppress.clinit", "dev.amble.ait.core.tardis.handler.ServerAlarmHandler,dev.amble.ait.core.AITSounds"
 }
 
 processResources {
